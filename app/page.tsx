@@ -6,7 +6,6 @@ import {
   Users,
   CheckCircle2,
   Clock,
-  Palette,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,12 +42,6 @@ export default function HomePage() {
               <Link href="/signup">
                 <Button size="sm" variant="outline" className="gap-2">
                   <span>Create Account</span>
-                </Button>
-              </Link>
-              <Link href="/dev/colors">
-                <Button size="sm" variant="ghost" className="text-muted gap-2">
-                  <Palette className="size-4" />
-                  <span>Color Tokens</span>
                 </Button>
               </Link>
             </div>

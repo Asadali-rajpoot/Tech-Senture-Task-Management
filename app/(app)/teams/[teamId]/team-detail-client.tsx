@@ -11,8 +11,21 @@ import {
   removeTeamMemberAction,
   type TeamActionResponse,
 } from "../actions";
+import {
+  createLabelAction,
+  deleteLabelAction,
+  type TaskActionResponse,
+} from "@/app/(app)/tasks/actions";
 import { OrgRole, TeamRole, ProjectDomain, TaskStatus, TaskPriority } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Users,
   FolderKanban,
@@ -29,6 +42,9 @@ import {
   UserPlus,
   UserMinus,
   CheckSquare,
+  Tag,
+  Search,
+  Check,
 } from "lucide-react";
 
 interface TeamMember {
@@ -41,6 +57,13 @@ interface TeamMember {
     image: string | null;
     orgRole: OrgRole;
   };
+}
+
+export interface TeamLabelItem {
+  id: string;
+  name: string;
+  color: string;
+  createdAt?: Date;
 }
 
 interface OrgMemberOption {
@@ -74,6 +97,7 @@ interface TeamDetail {
   name: string;
   description: string | null;
   createdAt: Date;
+  labels?: TeamLabelItem[];
   project: {
     id: string;
     name: string;
@@ -113,6 +137,12 @@ export function TeamDetailClient({
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<TeamRole>(TeamRole.MEMBER);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [addMemberError, setAddMemberError] = useState<string | null>(null);
+  const [addMemberSuccess, setAddMemberSuccess] = useState<string | null>(null);
+  const [isSubmittingMember, setIsSubmittingMember] = useState(false);
 
   // Form action states
   const [updateState, updateFormAction, isUpdatePending] = useActionState<
@@ -125,9 +155,6 @@ export function TeamDetailClient({
     FormData
   >(deleteTeamAction, {});
 
-  const [addMemberState, addMemberFormAction, isAddMemberPending] =
-    useActionState<TeamActionResponse, FormData>(addTeamMemberAction, {});
-
   const [roleState, roleFormAction] = useActionState<
     TeamActionResponse,
     FormData
@@ -137,6 +164,27 @@ export function TeamDetailClient({
     TeamActionResponse,
     FormData
   >(removeTeamMemberAction, {});
+
+  // Label management states
+  const [isCreateLabelOpen, setIsCreateLabelOpen] = useState(false);
+  const [newLabelColor, setNewLabelColor] = useState("#6366F1");
+  const [createLabelState, createLabelFormAction, isCreateLabelPending] =
+    useActionState<TaskActionResponse, FormData>(createLabelAction, {});
+  const [deleteLabelState, deleteLabelFormAction] = useActionState<
+    TaskActionResponse,
+    FormData
+  >(deleteLabelAction, {});
+
+  const PRESET_COLORS = [
+    "#6366F1", // Primary Indigo
+    "#8B5CF6", // Secondary Purple
+    "#22C55E", // Success Green
+    "#F59E0B", // Warning Amber
+    "#EF4444", // Danger Red
+    "#EC4899", // Pink
+    "#06B6D4", // Cyan
+    "#84CC16", // Lime
+  ];
 
   React.useEffect(() => {
     if (deleteState?.success) {
@@ -161,6 +209,51 @@ export function TeamDetailClient({
   const nonTeamOrgMembers = availableOrgMembers.filter(
     (orgM) => !team.memberships.some((tm) => tm.user.id === orgM.id)
   );
+
+  const filteredCandidates = nonTeamOrgMembers.filter((m) => {
+    if (!memberSearchQuery.trim()) return true;
+    const q = memberSearchQuery.toLowerCase();
+    return (
+      (m.name?.toLowerCase().includes(q) ?? false) ||
+      (m.email?.toLowerCase().includes(q) ?? false)
+    );
+  });
+
+  const handleAddMemberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserId) {
+      setAddMemberError("Please select a workspace member to add.");
+      return;
+    }
+    setIsSubmittingMember(true);
+    setAddMemberError(null);
+
+    const formData = new FormData();
+    formData.append("teamId", team.id);
+    formData.append("userId", selectedUserId);
+    formData.append("role", selectedRole);
+
+    try {
+      const res = await addTeamMemberAction({}, formData);
+      if (res.error) {
+        setAddMemberError(res.error);
+        setIsSubmittingMember(false);
+      } else {
+        setIsAddMemberOpen(false);
+        setSelectedUserId("");
+        setMemberSearchQuery("");
+        setSelectedRole(TeamRole.MEMBER);
+        setAddMemberSuccess(res.success || "Member added successfully!");
+        setIsSubmittingMember(false);
+        router.refresh();
+      }
+    } catch (err) {
+      setAddMemberError(
+        err instanceof Error ? err.message : "Failed to add member to team"
+      );
+      setIsSubmittingMember(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -279,16 +372,10 @@ export function TeamDetailClient({
           <p>{deleteState.error}</p>
         </div>
       )}
-      {addMemberState?.error && (
-        <div className="border-danger/30 bg-danger/10 text-danger flex items-start gap-3 rounded-lg border p-3.5 text-xs">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          <p>{addMemberState.error}</p>
-        </div>
-      )}
-      {addMemberState?.success && (
+      {addMemberSuccess && (
         <div className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-lg border p-3.5 text-xs">
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-          <p>{addMemberState.success}</p>
+          <p>{addMemberSuccess}</p>
         </div>
       )}
       {roleState?.error && (
@@ -313,6 +400,30 @@ export function TeamDetailClient({
         <div className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-lg border p-3.5 text-xs">
           <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
           <p>{removeState.success}</p>
+        </div>
+      )}
+      {createLabelState?.error && (
+        <div className="border-danger/30 bg-danger/10 text-danger flex items-start gap-3 rounded-lg border p-3.5 text-xs">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <p>{createLabelState.error}</p>
+        </div>
+      )}
+      {createLabelState?.success && (
+        <div className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-lg border p-3.5 text-xs">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <p>{createLabelState.success}</p>
+        </div>
+      )}
+      {deleteLabelState?.error && (
+        <div className="border-danger/30 bg-danger/10 text-danger flex items-start gap-3 rounded-lg border p-3.5 text-xs">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <p>{deleteLabelState.error}</p>
+        </div>
+      )}
+      {deleteLabelState?.success && (
+        <div className="border-success/30 bg-success/10 text-success flex items-start gap-3 rounded-lg border p-3.5 text-xs">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <p>{deleteLabelState.success}</p>
         </div>
       )}
 
@@ -364,9 +475,14 @@ export function TeamDetailClient({
 
           {canManageMembers && (
             <Button
-              onClick={() => setIsAddMemberOpen(true)}
+              onClick={() => {
+                setAddMemberError(null);
+                setMemberSearchQuery("");
+                setSelectedUserId(nonTeamOrgMembers[0]?.id || "");
+                setSelectedRole(TeamRole.MEMBER);
+                setIsAddMemberOpen(true);
+              }}
               size="sm"
-              disabled={nonTeamOrgMembers.length === 0}
               className="bg-primary hover:bg-primary/90 gap-1.5 text-xs font-semibold text-white shadow-xs"
             >
               <UserPlus className="size-3.5" />
@@ -517,6 +633,183 @@ export function TeamDetailClient({
         </div>
       </div>
 
+      {/* Team Labels & Tags Management Section (PRD.md §6.5.5) */}
+      <div className="border-border bg-card space-y-5 rounded-xl border p-6 shadow-xs">
+        <div className="border-border flex flex-col justify-between gap-3 border-b pb-4 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Tag className="text-secondary size-4" />
+              <h2 className="text-text text-base font-bold">Team Labels & Tags</h2>
+            </div>
+            <p className="text-muted text-xs">
+              Color-coded labels for organizing and categorizing tasks within this team
+            </p>
+          </div>
+
+          <Button
+            onClick={() => setIsCreateLabelOpen(true)}
+            size="sm"
+            className="bg-primary hover:bg-primary/90 gap-1.5 text-xs font-semibold text-white shadow-xs"
+          >
+            <Plus className="size-3.5" />
+            <span>Create Label</span>
+          </Button>
+        </div>
+
+        {/* Labels Grid */}
+        {(!team.labels || team.labels.length === 0) ? (
+          <div className="text-muted border-border/50 bg-background/50 rounded-lg border border-dashed py-8 text-center text-xs">
+            <Tag className="text-muted/40 mx-auto size-7" />
+            <p className="mt-2 font-medium">No labels created for this team yet.</p>
+            <p className="text-muted/70 text-[11px]">
+              Create labels (e.g. Bug, Feature, Urgent, Frontend) to tag your tasks.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {team.labels.map((label) => (
+              <div
+                key={label.id}
+                className="border-border bg-background/60 hover:bg-background group flex items-center justify-between rounded-xl border p-3.5 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="size-3 rounded-full shadow-xs"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  <span
+                    className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold text-white shadow-xs"
+                    style={{ backgroundColor: label.color }}
+                  >
+                    {label.name}
+                  </span>
+                </div>
+
+                <form
+                  action={deleteLabelFormAction}
+                  onSubmit={(e) => {
+                    if (
+                      !confirm(
+                        `Are you sure you want to delete label "${label.name}"? It will be detached from all tasks.`
+                      )
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <input type="hidden" name="labelId" value={label.id} />
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted hover:text-danger opacity-60 group-hover:opacity-100 size-7 p-0 transition-opacity"
+                    title="Delete label"
+                  >
+                    <Trash2 className="size-3.5" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Label Modal */}
+      {isCreateLabelOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div className="bg-card border-border animate-in fade-in zoom-in-95 w-full max-w-md space-y-5 rounded-2xl border p-6 shadow-xl duration-150">
+            <div className="border-border flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Tag className="text-secondary size-5" />
+                <h2 className="text-text text-base font-bold">
+                  Create Team Label
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsCreateLabelOpen(false)}
+                className="text-muted hover:text-text"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form
+              action={async (formData) => {
+                await createLabelFormAction(formData);
+                setIsCreateLabelOpen(false);
+              }}
+              className="space-y-4"
+            >
+              <input type="hidden" name="teamId" value={team.id} />
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="create-label-name"
+                  className="text-text block text-xs font-semibold"
+                >
+                  Label Name *
+                </label>
+                <input
+                  id="create-label-name"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="e.g. Bug, Feature, Urgency, DevOps"
+                  className="border-border bg-background text-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 text-xs transition-all focus:ring-2 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-text block text-xs font-semibold">
+                  Color Token *
+                </label>
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setNewLabelColor(c)}
+                      className={`size-7 rounded-full transition-transform ${
+                        newLabelColor === c
+                          ? "scale-110 ring-2 ring-primary ring-offset-2"
+                          : "hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                <input type="hidden" name="color" value={newLabelColor} />
+              </div>
+
+              <div className="border-border flex items-center justify-end gap-2 border-t pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCreateLabelOpen(false)}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isCreateLabelPending}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-xs text-white"
+                >
+                  {isCreateLabelPending ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <span>Create Label</span>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Edit Team Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
@@ -622,114 +915,209 @@ export function TeamDetailClient({
         </div>
       )}
 
-      {/* Add Member Modal */}
-      {isAddMemberOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-          <div className="bg-card border-border animate-in fade-in zoom-in-95 w-full max-w-md space-y-5 rounded-2xl border p-6 shadow-xl duration-150">
-            <div className="border-border flex items-center justify-between border-b pb-3">
-              <div className="flex items-center gap-2">
-                <UserPlus className="text-primary size-5" />
-                <h2 className="text-text text-base font-bold">
-                  Add Member to Team
-                </h2>
+      {/* Add Member Dialog */}
+      <Dialog
+        open={isAddMemberOpen}
+        onOpenChange={(open) => {
+          setIsAddMemberOpen(open);
+          if (!open) {
+            setAddMemberError(null);
+            setMemberSearchQuery("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
+                <UserPlus className="size-4" />
               </div>
-              <button
-                onClick={() => setIsAddMemberOpen(false)}
-                className="text-muted hover:text-text"
-              >
-                <X className="size-4" />
-              </button>
+              <div>
+                <DialogTitle>Add Member to Team</DialogTitle>
+                <DialogDescription>
+                  Search and assign a workspace member to {team.name}.
+                </DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
-            {nonTeamOrgMembers.length === 0 ? (
-              <div className="text-muted space-y-3 py-4 text-center text-xs">
-                <p>All members of this workspace are already in this team.</p>
+          {addMemberError && (
+            <div className="bg-danger/10 border-danger/20 text-danger flex items-start gap-2 rounded-lg border p-3 text-xs">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span>{addMemberError}</span>
+            </div>
+          )}
+
+          {nonTeamOrgMembers.length === 0 ? (
+            <div className="text-muted space-y-3 py-6 text-center text-xs">
+              <div className="bg-muted/10 mx-auto flex size-12 items-center justify-center rounded-full">
+                <Users className="text-muted size-6" />
+              </div>
+              <p className="text-text font-medium">All workspace members are already in this team.</p>
+              <p className="text-muted text-[11px]">
+                To invite new people to your workspace, go to Members settings.
+              </p>
+              <DialogFooter className="pt-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsAddMemberOpen(false)}
-                  className="text-xs"
+                  className="w-full text-xs sm:w-auto"
                 >
                   Close
                 </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={handleAddMemberSubmit} className="space-y-4">
+              {/* Member Search & Selection */}
+              <div className="space-y-2">
+                <label className="text-text block text-xs font-semibold">
+                  Select Member *
+                </label>
+
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="text-muted absolute left-3 top-1/2 size-3.5 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={memberSearchQuery}
+                    onChange={(e) => setMemberSearchQuery(e.target.value)}
+                    className="border-border bg-background text-text focus:border-primary focus:ring-primary/20 placeholder:text-muted w-full rounded-lg border py-2 pr-3 pl-8 text-xs focus:ring-2 focus:outline-none"
+                  />
+                </div>
+
+                {/* Candidate Member List */}
+                <div className="border-border divide-border max-h-48 divide-y overflow-y-auto rounded-lg border">
+                  {filteredCandidates.length === 0 ? (
+                    <div className="text-muted py-4 text-center text-xs">
+                      No members found matching &ldquo;{memberSearchQuery}&rdquo;
+                    </div>
+                  ) : (
+                    filteredCandidates.map((m) => {
+                      const isSelected = selectedUserId === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedUserId(m.id);
+                            setAddMemberError(null);
+                          }}
+                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition-colors ${
+                            isSelected
+                              ? "bg-primary/10 border-primary"
+                              : "hover:bg-muted/5"
+                          }`}
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="bg-secondary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white">
+                              {(m.name?.[0] || m.email?.[0] || "U").toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-text truncate text-xs font-medium">
+                                {m.name || m.email}
+                              </p>
+                              <p className="text-muted truncate text-[11px]">
+                                {m.email}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted bg-muted/10 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap">
+                              {m.orgRole === OrgRole.ORG_OWNER
+                                ? "Owner"
+                                : m.orgRole === OrgRole.ORG_ADMIN
+                                ? "Admin"
+                                : "Member"}
+                            </span>
+                            <div
+                              className={`flex size-4 items-center justify-center rounded-full border transition-colors ${
+                                isSelected
+                                  ? "border-primary bg-primary text-white"
+                                  : "border-border"
+                              }`}
+                            >
+                              {isSelected && <Check className="size-2.5 stroke-[3]" />}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            ) : (
-              <form
-                action={async (formData) => {
-                  await addMemberFormAction(formData);
-                  setIsAddMemberOpen(false);
-                }}
-                className="space-y-4"
-              >
-                <input type="hidden" name="teamId" value={team.id} />
 
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="add-user-select"
-                    className="text-text block text-xs font-semibold"
-                  >
-                    Select Member *
-                  </label>
-                  <select
-                    id="add-user-select"
-                    name="userId"
-                    required
-                    className="border-border bg-background text-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 text-xs focus:ring-2 focus:outline-none"
-                  >
-                    {nonTeamOrgMembers.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name || m.email} ({m.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="add-role-select"
-                    className="text-text block text-xs font-semibold"
-                  >
-                    Team Role *
-                  </label>
-                  <select
-                    id="add-role-select"
-                    name="role"
-                    defaultValue={TeamRole.MEMBER}
-                    className="border-border bg-background text-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3 py-2 text-xs focus:ring-2 focus:outline-none"
-                  >
-                    <option value={TeamRole.MEMBER}>MEMBER (Standard)</option>
-                    <option value={TeamRole.OWNER}>OWNER (Lead & Admin)</option>
-                  </select>
-                </div>
-
-                <div className="border-border flex items-center justify-end gap-2 border-t pt-3">
-                  <Button
+              {/* Team Role Selection */}
+              <div className="space-y-1.5">
+                <label className="text-text block text-xs font-semibold">
+                  Team Role *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsAddMemberOpen(false)}
-                    className="text-xs"
+                    onClick={() => setSelectedRole(TeamRole.MEMBER)}
+                    className={`border-border flex flex-col rounded-lg border p-2.5 text-left transition-all ${
+                      selectedRole === TeamRole.MEMBER
+                        ? "border-primary bg-primary/5 ring-primary/20 ring-2"
+                        : "hover:bg-muted/5"
+                    }`}
                   >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isAddMemberPending}
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-xs text-white"
+                    <span className="text-text text-xs font-semibold">MEMBER</span>
+                    <span className="text-muted text-[11px]">Standard collaborator</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole(TeamRole.OWNER)}
+                    className={`border-border flex flex-col rounded-lg border p-2.5 text-left transition-all ${
+                      selectedRole === TeamRole.OWNER
+                        ? "border-primary bg-primary/5 ring-primary/20 ring-2"
+                        : "hover:bg-muted/5"
+                    }`}
                   >
-                    {isAddMemberPending ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <span>Add to Team</span>
-                    )}
-                  </Button>
+                    <div className="flex items-center gap-1">
+                      <Shield className="text-primary size-3" />
+                      <span className="text-text text-xs font-semibold">OWNER</span>
+                    </div>
+                    <span className="text-muted text-[11px]">Lead & Admin</span>
+                  </button>
                 </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+              </div>
+
+              {/* Dialog Actions */}
+              <DialogFooter className="gap-2 border-t pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddMemberOpen(false)}
+                  disabled={isSubmittingMember}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!selectedUserId || isSubmittingMember}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-xs text-white"
+                >
+                  {isSubmittingMember ? (
+                    <>
+                      <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                      <span>Adding...</span>
+                    </>
+                  ) : (
+                    <span>Add to Team</span>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

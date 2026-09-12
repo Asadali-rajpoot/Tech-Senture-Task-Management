@@ -9,7 +9,7 @@ import {
   Users,
   CheckSquare,
   Settings,
-  Palette,
+  LogOut,
   Menu,
   X,
   Bell,
@@ -17,7 +17,8 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { NotificationCenter } from "@/components/notifications/notification-center";
+import { GlobalSearchDialog } from "@/components/search/global-search-dialog";
 import { logoutAction } from "@/app/(auth)/actions";
 
 interface AppShellProps {
@@ -35,10 +36,8 @@ const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Teams", href: "/teams", icon: Users },
-  { name: "Tasks", href: "/tasks/board", icon: CheckSquare },
+  { name: "Tasks", href: "/tasks/list", icon: CheckSquare },
   { name: "Members", href: "/settings/members", icon: Users },
-  { name: "Settings", href: "/settings/organization", icon: Settings },
-  { name: "Color Tokens (Dev)", href: "/dev/colors", icon: Palette },
 ];
 
 export function AppShell({
@@ -48,10 +47,29 @@ export function AppShell({
   user = { name: "Maya Lin", email: "maya@acme.com", orgRole: "ORG_OWNER" },
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
+
+  // Listen for global Cmd+K or Ctrl+K shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="bg-background text-text flex min-h-screen flex-col md:flex-row">
+      {/* Global Search Dialog Modal */}
+      <GlobalSearchDialog
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
+
       {/* Mobile Topbar */}
       <header className="bg-card border-border sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 md:hidden">
         <div className="flex items-center gap-2.5">
@@ -63,6 +81,16 @@ export function AppShell({
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSearchOpen(true)}
+            aria-label="Search"
+            className="text-muted hover:text-text"
+          >
+            <Search className="size-5" />
+          </Button>
+          <NotificationCenter />
           <Button
             variant="ghost"
             size="icon"
@@ -163,9 +191,44 @@ export function AppShell({
           })}
         </nav>
 
-        {/* User Profile Footer & Logout */}
-        <div className="border-border mt-auto space-y-2 border-t p-4">
-          <div className="bg-background border-border/50 flex items-center gap-3 rounded-lg border px-2 py-1.5">
+        {/* Lower Section: Settings, Profile & Logout */}
+        <div className="border-border mt-auto space-y-2 border-t p-3">
+          {/* Settings Nav Item */}
+          <Link
+            href="/settings"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+              pathname === "/settings" ||
+              (pathname?.startsWith("/settings") &&
+                pathname !== "/settings/profile" &&
+                pathname !== "/settings/members")
+                ? "bg-primary font-semibold text-white shadow-xs"
+                : "text-muted hover:text-text hover:bg-background"
+            }`}
+          >
+            <Settings
+              className={`size-4 ${
+                pathname === "/settings" ||
+                (pathname?.startsWith("/settings") &&
+                  pathname !== "/settings/profile" &&
+                  pathname !== "/settings/members")
+                  ? "text-white"
+                  : "text-muted"
+              }`}
+            />
+            <span>Settings</span>
+          </Link>
+
+          {/* User Profile Card */}
+          <Link
+            href="/settings/profile"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 rounded-lg border px-2.5 py-2 transition-colors ${
+              pathname === "/settings/profile"
+                ? "border-primary/50 bg-primary/5"
+                : "bg-background border-border/50 hover:bg-muted/5"
+            }`}
+          >
             <div className="bg-secondary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white">
               {user.name
                 ? user.name
@@ -184,15 +247,18 @@ export function AppShell({
                 {user.email || ""}
               </span>
             </div>
-          </div>
+          </Link>
+
+          {/* Sign Out Action */}
           <form action={logoutAction}>
             <Button
               type="submit"
               variant="ghost"
               size="sm"
-              className="text-danger hover:text-danger hover:bg-danger/10 w-full justify-start px-2 text-xs"
+              className="text-danger hover:text-danger hover:bg-danger/10 w-full justify-start px-2.5 text-xs font-medium"
             >
-              Sign out
+              <LogOut className="mr-2 size-3.5 text-danger" />
+              <span>Sign out</span>
             </Button>
           </form>
         </div>
@@ -203,34 +269,21 @@ export function AppShell({
         {/* Desktop Topbar */}
         <header className="bg-card border-border sticky top-0 z-30 hidden h-16 items-center justify-between border-b px-8 md:flex">
           <div className="flex w-96 items-center gap-4">
-            <div className="relative w-full">
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="bg-background border-border text-muted hover:text-text hover:border-primary/50 relative flex w-full items-center justify-between rounded-lg border py-1.5 pr-3 pl-9 text-xs transition-all shadow-2xs"
+            >
               <Search className="text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search projects, teams, tasks..."
-                className="bg-background border-border text-text placeholder:text-muted focus:ring-primary/20 focus:border-primary w-full rounded-lg border py-1.5 pr-4 pl-9 text-xs transition-all focus:ring-2 focus:outline-none"
-                disabled
-              />
-            </div>
+              <span>Search projects, teams, tasks...</span>
+              <kbd className="border-border bg-card text-muted rounded border px-1.5 py-0.5 font-mono text-[10px]">
+                Cmd+K
+              </kbd>
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted hover:text-text relative size-8"
-              aria-label="Notifications"
-            >
-              <Bell className="size-4" />
-              <span className="bg-danger absolute top-1.5 right-1.5 size-2 rounded-full" />
-            </Button>
-
-            <Link href="/dev/colors">
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                <Palette className="text-secondary size-3.5" />
-                <span>Color Tokens</span>
-              </Button>
-            </Link>
+            <NotificationCenter />
           </div>
         </header>
 

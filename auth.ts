@@ -87,6 +87,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
+      // If token is missing organizationId, check database to see if user created/joined an organization
+      if (token.id && !token.organizationId) {
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            select: { organizationId: true, orgRole: true },
+          });
+          if (dbUser?.organizationId) {
+            token.organizationId = dbUser.organizationId;
+            token.orgRole = dbUser.orgRole;
+          }
+        } catch {
+          // Ignore DB lookup error in JWT callback
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

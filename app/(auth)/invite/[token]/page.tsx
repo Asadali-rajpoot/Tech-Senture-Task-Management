@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getInvitationByToken } from "@/lib/data/members";
 import { InviteClient } from "./invite-client";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Building2, Shield } from "lucide-react";
 
 interface InvitePageProps {
@@ -16,7 +17,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   if (!invite || invite.expiresAt < new Date()) {
     return (
-      <div className="space-y-4 py-8 text-center">
+      <Card className="w-full max-w-md p-8 sm:p-10 bg-card border-border shadow-md rounded-2xl space-y-4 py-8 text-center">
         <div className="bg-danger/10 text-danger mx-auto flex size-12 items-center justify-center rounded-full">
           <Shield className="size-6" />
         </div>
@@ -32,14 +33,14 @@ export default async function InvitePage({ params }: InvitePageProps) {
             Return to Sign in
           </Button>
         </Link>
-      </div>
+      </Card>
     );
   }
 
   const session = await auth();
 
   return (
-    <div className="space-y-6">
+    <Card className="w-full max-w-md p-8 sm:p-10 bg-card border-border shadow-md rounded-2xl space-y-6">
       {/* Invite Header */}
       <div className="space-y-2 text-center">
         <div className="bg-primary/10 text-primary mx-auto flex size-12 items-center justify-center rounded-xl font-bold shadow-xs">
@@ -61,6 +62,6 @@ export default async function InvitePage({ params }: InvitePageProps) {
         isLoggedIn={Boolean(session?.user)}
         currentUserEmail={session?.user?.email}
       />
-    </div>
+    </Card>
   );
 }

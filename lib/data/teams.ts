@@ -42,6 +42,14 @@ export async function getOrgTeams(
           image: true,
         },
       },
+      labels: {
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+        orderBy: { name: "asc" },
+      },
       memberships: {
         include: {
           user: {
@@ -91,6 +99,9 @@ export async function getTeamById(organizationId: string, teamId: string) {
           email: true,
           image: true,
         },
+      },
+      labels: {
+        orderBy: { createdAt: "asc" },
       },
       memberships: {
         include: {

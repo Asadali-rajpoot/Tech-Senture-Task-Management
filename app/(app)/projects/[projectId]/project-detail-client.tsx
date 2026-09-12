@@ -41,6 +41,15 @@ interface Team {
   };
 }
 
+interface ProjectMetrics {
+  totalTasks: number;
+  todoTasks: number;
+  inProgressTasks: number;
+  doneTasks: number;
+  overdueTasks: number;
+  completionPercentage: number;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -49,6 +58,7 @@ interface Project {
   isArchived: boolean;
   createdAt: Date;
   teams: Team[];
+  metrics?: ProjectMetrics;
   _count: {
     teams: number;
   };
@@ -226,42 +236,77 @@ export function ProjectDetailClient({
       )}
 
       {/* Progress Overview Section (PRD.md §6.2.4) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted text-xs font-semibold">
-              Assigned Teams
-            </span>
-            <Users className="text-primary size-4" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+          <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted text-xs font-semibold">
+                Overall Progress
+              </span>
+              <CheckCircle2 className="text-success size-4" />
+            </div>
+            <div className="text-text text-2xl font-bold">
+              {project.metrics?.completionPercentage ?? 0}%
+            </div>
+            {/* Progress bar */}
+            <div className="bg-muted/20 h-1.5 w-full overflow-hidden rounded-full">
+              <div
+                className="bg-success h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${project.metrics?.completionPercentage ?? 0}%`,
+                }}
+              />
+            </div>
           </div>
-          <div className="text-text text-2xl font-bold">
-            {project.teams.length}
-          </div>
-          <p className="text-muted text-[11px]">
-            Executing teams in this project
-          </p>
-        </div>
 
-        <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted text-xs font-semibold">
-              Aggregated Tasks
-            </span>
-            <CheckCircle2 className="text-success size-4" />
+          <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted text-xs font-semibold">
+                Assigned Teams
+              </span>
+              <Users className="text-primary size-4" />
+            </div>
+            <div className="text-text text-2xl font-bold">
+              {project.teams.length}
+            </div>
+            <p className="text-muted text-[11px]">
+              Executing teams in this project
+            </p>
           </div>
-          <div className="text-text text-2xl font-bold">{totalTasks}</div>
-          <p className="text-muted text-[11px]">Total tasks across all teams</p>
-        </div>
 
-        <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted text-xs font-semibold">
-              Category Domain
-            </span>
-            <FolderKanban className="text-secondary size-4" />
+          <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted text-xs font-semibold">
+                Aggregated Tasks
+              </span>
+              <FolderKanban className="text-primary size-4" />
+            </div>
+            <div className="text-text text-2xl font-bold">
+              {project.metrics?.totalTasks ?? totalTasks}
+            </div>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-success font-medium">
+                {project.metrics?.doneTasks ?? 0} Done
+              </span>
+              <span>•</span>
+              <span className="text-primary font-medium">
+                {project.metrics?.inProgressTasks ?? 0} In Progress
+              </span>
+            </div>
           </div>
-          <div className="text-text text-lg font-bold">{project.domain}</div>
-          <p className="text-muted text-[11px]">Functional scope</p>
+
+          <div className="border-border bg-card space-y-2 rounded-xl border p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted text-xs font-semibold">
+                Overdue Tasks
+              </span>
+              <AlertCircle className="text-danger size-4" />
+            </div>
+            <div className="text-danger text-2xl font-bold">
+              {project.metrics?.overdueTasks ?? 0}
+            </div>
+            <p className="text-muted text-[11px]">Tasks past due date</p>
+          </div>
         </div>
       </div>
 

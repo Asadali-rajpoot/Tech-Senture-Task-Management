@@ -5,11 +5,7 @@ export const createOrganizationSchema = z.object({
     .string()
     .min(2, "Workspace name must be at least 2 characters")
     .max(50, "Workspace name is too long"),
-  teamSize: z
-    .enum(["1-5", "6-15", "16-50", "50+"], {
-      message: "Please select your team size",
-    })
-    .optional(),
+  teamSize: z.string().min(1, "Please select a team size"),
 });
 
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;

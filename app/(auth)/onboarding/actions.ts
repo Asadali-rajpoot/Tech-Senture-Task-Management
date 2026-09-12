@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { withAuth } from "@/lib/api/proxy";
 import { db } from "@/lib/db";
 import { createOrganizationSchema } from "@/lib/validation/organization";
@@ -29,7 +30,7 @@ export async function createWorkspaceAction(
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
       const uniqueSuffix = Math.random().toString(36).substring(2, 6);
-      const slug = `${baseSlug}-${uniqueSuffix}`;
+      const slug = `${baseSlug || "workspace"}-${uniqueSuffix}`;
 
       // Create organization and set user as ORG_OWNER
       const org = await db.organization.create({
@@ -57,5 +58,6 @@ export async function createWorkspaceAction(
     };
   }
 
+  revalidatePath("/", "layout");
   redirect("/dashboard");
 }

@@ -25,6 +25,23 @@ export async function requireAuth() {
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  // Fallback: If session user is missing organizationId, check DB
+  if (!session.user.organizationId) {
+    try {
+      const dbUser = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { organizationId: true, orgRole: true },
+      });
+      if (dbUser?.organizationId) {
+        session.user.organizationId = dbUser.organizationId;
+        session.user.orgRole = dbUser.orgRole;
+      }
+    } catch {
+      // Ignore DB lookup error
+    }
+  }
+
   return session;
 }
 
