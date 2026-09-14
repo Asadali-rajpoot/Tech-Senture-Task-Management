@@ -192,7 +192,7 @@ export function DashboardClient({
               </div>
             </div>
 
-            <Link href="/tasks/list">
+            <Link href="/tasks/board">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 shrink-0">
                 <span>View Tasks</span>
                 <ArrowRight className="size-3.5" />
@@ -204,7 +204,7 @@ export function DashboardClient({
             {userOverdueTasks.map((t) => (
               <Link
                 key={t.id}
-                href="/tasks/list"
+                href="/tasks/board"
                 className="bg-card hover:bg-muted/10 border border-danger/30 rounded-lg p-3 flex items-center justify-between text-xs transition-colors shadow-2xs"
               >
                 <div className="min-w-0 pr-2">
@@ -220,7 +220,7 @@ export function DashboardClient({
             {userUpcomingTasks.map((t) => (
               <Link
                 key={t.id}
-                href="/tasks/list"
+                href="/tasks/board"
                 className="bg-card hover:bg-muted/10 border border-warning/30 rounded-lg p-3 flex items-center justify-between text-xs transition-colors shadow-2xs"
               >
                 <div className="min-w-0 pr-2">

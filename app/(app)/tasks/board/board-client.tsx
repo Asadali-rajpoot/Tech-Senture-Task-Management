@@ -4,6 +4,7 @@ import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedViewsBar, type TaskFilterState } from "@/components/tasks/saved-views-bar";
+import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
 import {
   DndContext,
   DragOverlay,
@@ -12,6 +13,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   DragStartEvent,
   DragOverEvent,
   DragEndEvent,
@@ -493,36 +495,7 @@ export function BoardClient({
 
         <div className="flex flex-wrap items-center gap-3">
           {/* View Switcher Tabs */}
-          <div className="border-border bg-card flex items-center rounded-lg border p-1 shadow-xs">
-            <Link
-              href="/tasks/list"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <LayoutList className="size-3.5" />
-              <span>List</span>
-            </Link>
-            <Link
-              href="/tasks/board"
-              className="bg-primary text-white flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xs"
-            >
-              <Kanban className="size-3.5" />
-              <span>Board</span>
-            </Link>
-            <Link
-              href="/tasks/calendar"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <CalendarDays className="size-3.5" />
-              <span>Calendar</span>
-            </Link>
-            <Link
-              href="/tasks/timeline"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <GanttChartSquare className="size-3.5" />
-              <span>Timeline</span>
-            </Link>
-          </div>
+          <TaskViewSwitcher currentView="board" />
 
           <Button
             onClick={() => {
@@ -718,9 +691,9 @@ export function BoardClient({
                   items={columnTasks.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div
+                  <DroppableColumnContainer
                     id={column.id}
-                    className="flex-1 space-y-3"
+                    className="flex-1 space-y-3 min-h-[140px]"
                   >
                     {columnTasks.length === 0 ? (
                       /* Empty Column State (PRD.md §6.4.2 / §7.1) */
@@ -730,6 +703,7 @@ export function BoardClient({
                           No tasks here
                         </p>
                         <button
+                          type="button"
                           onClick={() => {
                             setCreateColumnStatus(column.id);
                             setIsCreateOpen(true);
@@ -753,7 +727,7 @@ export function BoardClient({
                         />
                       ))
                     )}
-                  </div>
+                  </DroppableColumnContainer>
                 </SortableContext>
               </div>
             );
@@ -763,10 +737,11 @@ export function BoardClient({
         {/* Drag Overlay for smooth card movement */}
         <DragOverlay>
           {activeTask ? (
-            <div className="border-primary bg-card/95 rotate-2 scale-105 space-y-2.5 rounded-xl border-2 p-4 shadow-2xl backdrop-blur-xs">
+            <div className="border-primary bg-card/95 rotate-2 scale-105 space-y-2.5 rounded-xl border-2 p-3.5 shadow-2xl backdrop-blur-xs cursor-grabbing ring-4 ring-primary/20 max-w-xs">
               <div className="flex items-center justify-between">
-                <span className="text-text text-xs font-semibold">
-                  {activeTask.title}
+                <span className="text-muted flex items-center gap-1 text-[11px] font-medium">
+                  <GripVertical className="size-3 text-primary" />
+                  {activeTask.team.name}
                 </span>
                 <span
                   className={`rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase ${getPriorityBadge(
@@ -776,9 +751,17 @@ export function BoardClient({
                   {activeTask.priority}
                 </span>
               </div>
-              <p className="text-muted text-[11px]">
-                {activeTask.team.name} • {activeTask.team.project.name}
+              <p className="text-text text-xs font-bold leading-snug">
+                {activeTask.title}
               </p>
+              <div className="border-border/60 flex items-center justify-between border-t pt-2 text-[10px] text-muted">
+                <span>{activeTask.team.project.name}</span>
+                {activeTask.assignee && (
+                  <span className="bg-primary/10 text-primary font-semibold px-1.5 py-0.2 rounded-full">
+                    {activeTask.assignee.name || activeTask.assignee.email}
+                  </span>
+                )}
+              </div>
             </div>
           ) : null}
         </DragOverlay>
@@ -1234,7 +1217,34 @@ export function BoardClient({
 }
 
 /**
- * Sortable Individual Task Card
+ * Droppable Column Container for dnd-kit
+ */
+function DroppableColumnContainer({
+  id,
+  children,
+  className = "",
+}: {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      id={id}
+      className={`${className} transition-colors ${
+        isOver ? "bg-primary/5 ring-primary/30 ring-2 rounded-xl" : ""
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Sortable Individual Task Card with dnd-kit
  */
 function SortableTaskCard({
   task,
@@ -1251,7 +1261,11 @@ function SortableTaskCard({
   onSelectDetail: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onMoveTask?: (taskId: string, targetStatus: TaskStatus, direction?: "up" | "down") => void;
+  onMoveTask?: (
+    taskId: string,
+    targetStatus: TaskStatus,
+    direction?: "up" | "down"
+  ) => void;
 }) {
   const {
     attributes,
@@ -1278,21 +1292,24 @@ function SortableTaskCard({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`border-border bg-card hover:border-primary/50 group relative space-y-3 rounded-xl border p-3.5 shadow-xs transition-all ${
-        isDragging ? "ring-primary z-50 ring-2 shadow-lg" : ""
+      {...listeners}
+      className={`border-border bg-card hover:border-primary/50 group relative space-y-3 rounded-xl border p-3.5 shadow-xs transition-all cursor-grab active:cursor-grabbing ${
+        isDragging ? "ring-primary z-50 ring-2 shadow-lg opacity-40" : ""
       }`}
     >
       {/* Top Drag Handle & Quick Badges Header */}
       <div className="flex items-center justify-between gap-2">
         <div
-          {...listeners}
-          className="text-muted hover:text-text cursor-grab active:cursor-grabbing"
+          className="text-muted group-hover:text-text cursor-grab active:cursor-grabbing"
           title="Drag to reorder or change status"
         >
           <GripVertical className="size-3.5" />
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div
+          className="flex items-center gap-1.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           {/* Accessible Keyboard Move Menu (PRD §9 / Module 25) */}
           {onMoveTask && (
             <select
@@ -1347,6 +1364,7 @@ function SortableTaskCard({
       <div className="space-y-1">
         <button
           type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={onSelectDetail}
           className="text-text group-hover:text-primary text-left text-xs font-bold leading-snug transition-colors hover:underline"
         >
@@ -1488,7 +1506,10 @@ function SortableTaskCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+        <div
+          className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <Button
             variant="ghost"
             size="sm"

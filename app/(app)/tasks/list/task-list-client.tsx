@@ -4,6 +4,7 @@ import React, { useActionState, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SavedViewsBar, type TaskFilterState } from "@/components/tasks/saved-views-bar";
+import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
 import {
   createTaskAction,
   updateTaskAction,
@@ -447,36 +448,7 @@ export function TaskListClient({
 
         <div className="flex flex-wrap items-center gap-3">
           {/* View Switcher Tabs */}
-          <div className="border-border bg-card flex items-center rounded-lg border p-1 shadow-xs">
-            <Link
-              href="/tasks/list"
-              className="bg-primary text-white flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold shadow-xs"
-            >
-              <LayoutList className="size-3.5" />
-              <span>List</span>
-            </Link>
-            <Link
-              href="/tasks/board"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <Kanban className="size-3.5" />
-              <span>Board</span>
-            </Link>
-            <Link
-              href="/tasks/calendar"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <CalendarDays className="size-3.5" />
-              <span>Calendar</span>
-            </Link>
-            <Link
-              href="/tasks/timeline"
-              className="text-muted hover:text-text flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            >
-              <GanttChartSquare className="size-3.5" />
-              <span>Timeline</span>
-            </Link>
-          </div>
+          <TaskViewSwitcher currentView="list" />
 
           <Button
             onClick={() => setIsCreateOpen(true)}

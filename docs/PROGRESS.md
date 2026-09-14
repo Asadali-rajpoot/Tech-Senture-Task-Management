@@ -554,6 +554,27 @@
   - `app/(app)/tasks/board/board-client.tsx`
   - `docs/PROGRESS.md`
 
+### Recent UI, Navigation & Feature Refinements
+- **Completed:** September 13, 2026
+- **What was built:**
+  - **Auth & Onboarding Overhaul:** Rebuilt Login (`/login`), Sign Up (`/signup`), and Workspace Onboarding (`/onboarding`) screens with consistent visual hierarchy (centered card, dynamic `AppSettings` app name branding, primary `#6366F1` actions, reactive Zod validation, and automatic session refresh to resolve onboarding redirect loops).
+  - **Root Route Overhaul (`app/page.tsx`):** Removed dummy placeholder landing page; root `/` now renders the Login form directly for unauthenticated visitors and automatically redirects authenticated sessions to `/dashboard`.
+  - **Sidebar Footer & Settings Position:** Updated `AppShell` (`components/shared/app-shell.tsx`) to move `Settings` out of submenus and place it cleanly above the user profile card in the lower sidebar section, with the red Danger `Sign out` button directly below.
+  - **Board as Default Tasks View:** Configured Kanban Board (`/tasks/board`) as the default task route on first navigation across the app shell, dashboard task links, search navigation, and `/tasks` base redirect.
+  - **Unified TaskViewSwitcher Component (`components/tasks/task-view-switcher.tsx`):** Consolidated view switcher tabs across List, Board, Calendar, and Timeline into a single shared component enforcing the updated tab order: `Board`, `List`, `Calendar`, `Timeline`.
+  - **DnD-Kit Kanban Optimization (`app/(app)/tasks/board/board-client.tsx`):** Enhanced `@dnd-kit/core` and `@dnd-kit/sortable` integration with `DroppableColumnContainer` with active hover indicators (`isOver`) for empty and populated columns, whole-card and handle drag listeners with pointer propagation isolation on inner buttons/actions, and rich elevated `<DragOverlay>` preview.
+- **Manual test status:**
+  - Visiting `http://localhost:3000` renders the login page or redirects logged-in sessions to `/dashboard`.
+  - Clicking "Tasks" in the sidebar routes to `/tasks/board`.
+  - Dragging cards across columns and into empty columns is smooth and updates status/position optimistically and in SQLite/Postgres DB.
+  - Tab order shows Board, List, Calendar, Timeline consistently across all 4 views.
+  - `npm run build` passes with exit code 0 across all 21 routes.
+- **Files touched:**
+  - `app/page.tsx`, `app/(auth)/login/page.tsx`, `components/shared/app-shell.tsx`
+  - `app/(app)/tasks/page.tsx`, `components/dashboard/dashboard-client.tsx`, `components/search/global-search-dialog.tsx`
+  - `components/tasks/task-view-switcher.tsx`, `app/(app)/tasks/board/board-client.tsx`, `app/(app)/tasks/list/task-list-client.tsx`, `app/(app)/tasks/calendar/calendar-client.tsx`, `app/(app)/tasks/timeline/timeline-client.tsx`
+  - `docs/PROGRESS.md`
+
 ---
 
 ## Open Questions Carried From PRD.md §10.2

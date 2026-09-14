@@ -309,7 +309,7 @@ export function GlobalSearchDialog({ isOpen, onClose }: GlobalSearchDialogProps)
                       <button
                         key={task.id}
                         type="button"
-                        onClick={() => navigateTo(`/tasks/list?search=${encodeURIComponent(task.title)}`)}
+                        onClick={() => navigateTo(`/tasks/board?search=${encodeURIComponent(task.title)}`)}
                         className="hover:bg-card/80 group flex w-full items-center justify-between p-3 text-left transition-colors"
                       >
                         <div className="min-w-0 flex-1 space-y-1 pr-3">

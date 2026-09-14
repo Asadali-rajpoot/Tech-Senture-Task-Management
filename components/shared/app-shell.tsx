@@ -36,7 +36,7 @@ const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Teams", href: "/teams", icon: Users },
-  { name: "Tasks", href: "/tasks/list", icon: CheckSquare },
+  { name: "Tasks", href: "/tasks/board", icon: CheckSquare },
   { name: "Members", href: "/settings/members", icon: Users },
 ];
 
@@ -126,7 +126,7 @@ export function AppShell({
         {/* Brand Header */}
         <div className="border-border flex h-16 items-center justify-between border-b px-6">
           <Link
-            href="/"
+            href="/dashboard"
             className="group flex items-center gap-2.5"
             onClick={() => setMobileMenuOpen(false)}
           >
