@@ -12,6 +12,6 @@ export async function getAppSettings() {
 
   return {
     id: "default-settings",
-    appName: "Tech Senture",
+    appName: "PROXima",
   };
 }

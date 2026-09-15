@@ -6,7 +6,7 @@ import { TaskItem, TeamWithMembers } from "../list/task-list-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Timeline | Tech Senture",
+  title: "Timeline | PROXima",
   description: "Interactive horizontal timeline and schedule roadmap for tasks.",
 };
 

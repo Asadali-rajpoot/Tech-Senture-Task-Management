@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { SecurityClient } from "./security-client";
 
 export const metadata: Metadata = {
-  title: "Security Settings | Tech Senture",
+  title: "Security Settings | PROXima",
   description: "Manage account password and two-factor authentication.",
 };
 

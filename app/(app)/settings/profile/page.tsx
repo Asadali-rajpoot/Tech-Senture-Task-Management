@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { ProfileClient } from "./profile-client";
 
 export const metadata: Metadata = {
-  title: "Profile Settings | Tech Senture",
+  title: "Profile Settings | PROXima",
   description: "Manage your personal account profile, work email, and avatar.",
 };
 

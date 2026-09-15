@@ -10,7 +10,7 @@ import { Building2, Globe, Shield, Users, Palette, Sparkles } from "lucide-react
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Organization & Branding Settings | Tech Senture",
+  title: "Organization & Branding Settings | PROXima",
   description: "Manage workspace profile, member hierarchy, and application branding.",
 };
 

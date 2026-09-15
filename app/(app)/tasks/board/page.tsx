@@ -6,7 +6,7 @@ import { TaskItem, TeamWithMembers } from "../list/task-list-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Board | Tech Senture",
+  title: "Board | PROXima",
   description: "Kanban board view for task workflow tracking.",
 };
 

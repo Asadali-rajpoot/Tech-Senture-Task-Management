@@ -16,10 +16,10 @@ async function main() {
   // 1. AppSettings
   await prisma.appSettings.upsert({
     where: { id: "default-settings" },
-    update: { appName: "Tech Senture" },
+    update: { appName: "PROXima" },
     create: {
       id: "default-settings",
-      appName: "Tech Senture",
+      appName: "PROXima",
     },
   });
 

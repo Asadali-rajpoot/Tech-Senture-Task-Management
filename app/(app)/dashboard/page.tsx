@@ -7,8 +7,8 @@ import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { TaskStatus } from "@prisma/client";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Tech Senture",
-  description: "Organization overview, project metrics, and team workload analytics.",
+  title: "Dashboard | PROXima",
+  description: "Workspace overview, metrics, and member workload.",
 };
 
 export default async function DashboardPage() {

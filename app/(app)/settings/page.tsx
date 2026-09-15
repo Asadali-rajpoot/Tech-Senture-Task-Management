@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Settings | Tech Senture",
+  title: "Settings | PROXima",
   description: "Account profile, security, workspace parameters, and notification settings.",
 };
 

@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tech Senture",
+  title: "PROXima",
   description: "Multi-Organization Task & Project Management Platform",
+  icons: {
+    icon: [
+      { url: "/icon.png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: ["/icon.png"],
+    apple: [{ url: "/icon.png" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

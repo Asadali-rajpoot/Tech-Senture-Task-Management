@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -14,7 +15,6 @@ import {
   X,
   Bell,
   Search,
-  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/notification-center";
@@ -42,7 +42,7 @@ const navItems = [
 
 export function AppShell({
   children,
-  appName = "Tech Senture",
+  appName = "PROXima",
   workspaceName = "Acme Corp",
   user = { name: "Maya Lin", email: "maya@acme.com", orgRole: "ORG_OWNER" },
 }: AppShellProps) {
@@ -73,12 +73,24 @@ export function AppShell({
       {/* Mobile Topbar */}
       <header className="bg-card border-border sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 md:hidden">
         <div className="flex items-center gap-2.5">
-          <div className="bg-primary flex size-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm">
-            <Layers className="size-5" />
-          </div>
-          <span className="text-text text-base font-bold tracking-tight">
-            {appName}
-          </span>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5"
+          >
+            <div className="relative size-8 shrink-0 overflow-hidden rounded-lg">
+              <Image
+                src="/icon.png"
+                alt={appName}
+                width={32}
+                height={32}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </div>
+            <span className="text-text text-lg font-bold tracking-tight">
+              {appName}
+            </span>
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -124,14 +136,21 @@ export function AppShell({
         } h-screen`}
       >
         {/* Brand Header */}
-        <div className="border-border flex h-16 items-center justify-between border-b px-6">
+        <div className="border-border flex h-16 items-center justify-between border-b px-4">
           <Link
             href="/dashboard"
             className="group flex items-center gap-2.5"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="bg-primary flex size-8 items-center justify-center rounded-lg text-sm font-bold text-white shadow-sm transition-transform group-hover:scale-105">
-              <Layers className="size-5" />
+            <div className="relative size-8 shrink-0 overflow-hidden rounded-lg transition-transform group-hover:scale-105">
+              <Image
+                src="/icon.png"
+                alt={appName}
+                width={32}
+                height={32}
+                className="h-full w-full object-contain"
+                priority
+              />
             </div>
             <span className="text-text text-lg font-bold tracking-tight">
               {appName}

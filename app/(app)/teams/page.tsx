@@ -4,7 +4,7 @@ import { TeamsClient } from "./teams-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Teams | Tech Senture",
+  title: "Teams | PROXima",
   description: "Manage organizational teams, members, and project assignments.",
 };
 

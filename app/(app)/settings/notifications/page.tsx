@@ -5,7 +5,7 @@ import { NotificationsSettingsClient } from "./notifications-settings-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Notification Settings | Tech Senture",
+  title: "Notification Settings | PROXima",
   description: "Configure email alerts, task reminders, and digest preferences.",
 };
 

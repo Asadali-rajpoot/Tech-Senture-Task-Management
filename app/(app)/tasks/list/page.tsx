@@ -5,7 +5,7 @@ import { TaskListClient, TaskItem, TeamWithMembers } from "./task-list-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tasks | Tech Senture",
+  title: "Tasks | PROXima",
   description: "View and manage tasks across your teams.",
 };
 

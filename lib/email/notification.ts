@@ -19,7 +19,7 @@ export async function sendNotificationEmail({
   console.log("=================================================");
   console.log(`✉️ [EMAIL DISPATCH - ${type.toUpperCase()}]`);
   console.log(`To: ${userName ? `${userName} <${toEmail}>` : toEmail}`);
-  console.log(`Subject: [Tech Senture] ${title}`);
+  console.log(`Subject: [PROXima] ${title}`);
   console.log(`Message: ${message}`);
   if (link) {
     console.log(`Action Link: ${link}`);

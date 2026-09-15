@@ -22,7 +22,7 @@ export async function generateMetadata({
   const team = await getTeamById(session.user.organizationId, teamId);
 
   return {
-    title: team ? `${team.name} | Tech Senture` : "Team Details | Tech Senture",
+    title: team ? `${team.name} | PROXima` : "Team Details | PROXima",
     description: team?.description || "Manage team members and task assignments.",
   };
 }

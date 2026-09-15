@@ -6,7 +6,7 @@ import { TaskItem, TeamWithMembers } from "../list/task-list-client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Calendar | Tech Senture",
+  title: "Calendar | PROXima",
   description: "Monthly calendar view for scheduled tasks and deadlines.",
 };
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Check, Loader2, AlertCircle, ArrowRight } from "lucide-react";
+import { Loader2, AlertCircle, ArrowRight } from "lucide-react";
 
 interface OnboardingFormProps {
   appName: string;
@@ -73,13 +74,22 @@ export function OnboardingForm({ appName }: OnboardingFormProps) {
 
       <Card className="w-full max-w-md p-8 sm:p-10 bg-card border-border shadow-md rounded-2xl space-y-6">
         {/* Brand Header */}
-        <div className="flex items-center gap-2.5">
-          <div className="bg-primary flex size-7 items-center justify-center rounded-lg text-white shadow-xs">
-            <Check className="size-4 stroke-[2.5]" />
+        <div className="flex items-center justify-start">
+          <div className="flex items-center gap-2.5">
+            <div className="relative size-9 shrink-0 overflow-hidden rounded-lg">
+              <Image
+                src="/icon.png"
+                alt={appName}
+                width={36}
+                height={36}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </div>
+            <span className="text-text text-xl font-bold tracking-tight">
+              {appName || "PROXima"}
+            </span>
           </div>
-          <span className="text-text text-base font-bold tracking-tight">
-            {appName}
-          </span>
         </div>
 
         {/* Step Indicator, Heading & Subtext */}

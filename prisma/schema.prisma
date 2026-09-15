@@ -62,7 +62,7 @@ enum RecurrenceRule {
 
 model AppSettings {
   id        String   @id @default(cuid())
-  appName   String   @default("Tech Senture")
+  appName   String   @default("PROXima")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
